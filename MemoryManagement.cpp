@@ -23,10 +23,7 @@ MemoryManagement::MemoryManagement(){
 
 
 bool MemoryManagement::lmalloc(const unsigned int size) {
-    if (current == nullptr) {
-        printf("Memory Allocated failed!");
-        return false;
-    }
+    if (current == nullptr) return false;
 
     if (current->next == current) {
         if (current->m_size >= size) {
@@ -53,7 +50,6 @@ bool MemoryManagement::lmalloc(const unsigned int size) {
                     check(false);
                     return true;
                 }
-                printf("next\n");
                 current = current->next;
             }
         }
@@ -62,7 +58,10 @@ bool MemoryManagement::lmalloc(const unsigned int size) {
 }
 
 void MemoryManagement::lfree(unsigned int addr, unsigned int size) {
-    if (size <= 0 || addr >= ssize) return;
+    if (size <= 0) {
+        printf("Exceed allowed space [%x:%x].\n", start+size, start);
+        return;
+    }
     map *tmp = new map(start+addr, size);
     if (current == nullptr) {
         current = tmp;
@@ -74,13 +73,33 @@ void MemoryManagement::lfree(unsigned int addr, unsigned int size) {
         head = head->next;
         map *temp;
         if (addr < head->m_addr-start) {
+            if (start+addr+size > head->m_addr) {
+                printf("Double free space [%x:%x].\n", head->m_addr, start+addr);
+                return;
+            }
             temp = head;
-        } else if (addr > head->prior->m_addr-start) {
+        } else if (addr >= head->prior->m_addr-start) {
+            if (addr+size > ssize) {
+                printf("Exceed allowed space [%x:%x].\n", start+ssize, start+addr+size);
+                return;
+            } else if (addr >= head->prior->m_addr-start && addr < head->prior->m_addr-start+head->prior->m_size) {
+                printf("Double free space [%x:%x].\n", start+addr, (start+addr+size > head->prior->m_addr+head->prior->m_size)? head->prior->m_addr+head->prior->m_size:start+addr+size);
+                return;
+            }
             temp = head->prior;
-        }
-        else {
+        } else {
             temp = head;
             while (addr > temp->m_addr-start) temp = temp->next;
+            if (start+addr < temp->prior->m_addr+temp->prior->m_size) {
+                printf("Double free space [%x:%x].\n", start+addr, temp->prior->m_addr+temp->prior->m_size);
+                return;
+            } else if (addr+size > ssize) {
+                printf("Exceed allowed space [%x:%x].\n", start+ssize, start+addr+size);
+                return;
+            } else if (start+addr+size >= temp->m_addr) {
+                printf("Double free space [%x:%x].\n", temp->m_addr, start+addr+size);
+                return;
+            }
         }
         tmp->next = temp;
         tmp->prior = temp->prior;
@@ -153,7 +172,7 @@ void MemoryManagement::show(bool debug) const {
     else
         printf("|  m_addr: %x  |\n", tmp->m_addr);
     printf("|  m_size: %8d  |\n", tmp->m_size);
-    printf("---------------------\n");
+    printf("---------------------\n\n");
 }
 
 void MemoryManagement::clear() {

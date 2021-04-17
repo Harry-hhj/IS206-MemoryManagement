@@ -30,8 +30,8 @@ private:
 
 public:
     MemoryManagement();
-    bool lmalloc(unsigned);
-    void lfree(unsigned int addr, unsigned int size);
+    bool lmalloc(unsigned);  // fenpei shibai shuchu
+    void lfree(unsigned int addr, unsigned int size);   // ruguo chognfu shifang zenme ban
     void show(bool debug = false) const;
     void clear();
     ~MemoryManagement();
