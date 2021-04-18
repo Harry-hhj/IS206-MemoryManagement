@@ -5,13 +5,14 @@
 #include "MemoryManagement.h"
 
 
-unsigned int MemoryManagement::ssize = 1000;
+unsigned int MemoryManagement::ssize = 1000;  // 请求1000连续内存
 
 MemoryManagement::MemoryManagement(){
     start = (char *)malloc(1000);
     if(start)
         printf("Memory Allocated at: %x\n", start);
     else {
+        // 内存请求失败
         printf("Not Enough Memory!\n");
         start = nullptr;
         current = nullptr;
@@ -25,7 +26,7 @@ MemoryManagement::MemoryManagement(){
 bool MemoryManagement::lmalloc(const unsigned int size) {
     if (current == nullptr) return false;
 
-    if (current->next == current) {
+    if (current->next == current) {  // 仅有一个节点时
         if (current->m_size >= size) {
             current->m_addr += size;
             current->m_size -= size;
@@ -34,13 +35,13 @@ bool MemoryManagement::lmalloc(const unsigned int size) {
         } else {
             return false;
         }
-    } else {
-        if (current->m_size >= size) {
+    } else {  // 有两个以上的节点
+        if (current->m_size >= size) {  // current当前指向的空闲分区大小大于等于需求
             current->m_addr += size;
             current->m_size -= size;
             check(false);
             return true;
-        } else {
+        } else {  // 依次寻找可能的大小足够的分区
             map *temp = current;
             current = current->next;
             while (current != temp) {
@@ -53,7 +54,7 @@ bool MemoryManagement::lmalloc(const unsigned int size) {
                 current = current->next;
             }
         }
-        return false;
+        return false;  // 未能找到大小足够的分区
     }
 }
 
@@ -62,41 +63,41 @@ void MemoryManagement::lfree(unsigned int addr, unsigned int size, bool show) {
         printf("Exceed allowed space [%x:%x].\n", start+size, start);
         return;
     }
-    map *tmp = new map(start+addr, size);
-    if (current == nullptr) {
+    map *tmp = new map(start+addr, size);  // 创建新增插入表项节点
+    if (current == nullptr) {  // 当前空闲分区为空
         current = tmp;
         current->next = current;
         current->prior = current;
-    } else {
+    } else {  // 当前空闲分区不为空
         map *head = current;
         while (head->m_addr < head->next->m_addr) head = head->next;
-        head = head->next;
+        head = head->next;  // 找到地址最小的节点
         map *temp;
-        if (addr < head->m_addr-start) {
-            if (start+addr+size > head->m_addr) {
+        if (addr < head->m_addr-start) {  // 插在头部
+            if (start+addr+size > head->m_addr) {  // 新增节点与后一节点的空间重合
                 printf("Double free space [%x:%x].\n", head->m_addr, start+addr);
                 return;
             }
             temp = head;
-        } else if (addr >= head->prior->m_addr-start) {
-            if (addr+size > ssize) {
+        } else if (addr >= head->prior->m_addr-start) {  // 插在尾部
+            if (addr+size > ssize) {  // 新增节点的大小越界
                 printf("Exceed allowed space [%x:%x].\n", start+ssize, start+addr+size);
                 return;
-            } else if (addr >= head->prior->m_addr-start && addr < head->prior->m_addr-start+head->prior->m_size) {
+            } else if (addr >= head->prior->m_addr-start && addr < head->prior->m_addr-start+head->prior->m_size) {  // 新增节点与前一节点的空间重合
                 printf("Double free space [%x:%x].\n", start+addr, (start+addr+size > head->prior->m_addr+head->prior->m_size)? head->prior->m_addr+head->prior->m_size:start+addr+size);
                 return;
             }
             temp = head->prior;
         } else {
             temp = head;
-            while (addr > temp->m_addr-start) temp = temp->next;
-            if (start+addr < temp->prior->m_addr+temp->prior->m_size) {
+            while (addr > temp->m_addr-start) temp = temp->next;  // 找到合适的插入位置
+            if (start+addr < temp->prior->m_addr+temp->prior->m_size) {  // 重叠
                 printf("Double free space [%x:%x].\n", start+addr, temp->prior->m_addr+temp->prior->m_size);
                 return;
-            } else if (addr+size > ssize) {
+            } else if (addr+size > ssize) {  // 返还空间越界
                 printf("Exceed allowed space [%x:%x].\n", start+ssize, start+addr+size);
                 return;
-            } else if (start+addr+size >= temp->m_addr) {
+            } else if (start+addr+size >= temp->m_addr) {  // 重叠
                 printf("Double free space [%x:%x].\n", temp->m_addr, start+addr+size);
                 return;
             }
@@ -110,6 +111,8 @@ void MemoryManagement::lfree(unsigned int addr, unsigned int size, bool show) {
     if (show) this->show(true);
 }
 
+
+// 检测规则函数
 void MemoryManagement::check(bool flag, map *loc) {
     if (flag == 0) {  // 解决分配内存产生０的问题
         if (current->m_size == 0) {
@@ -148,6 +151,8 @@ void MemoryManagement::check(bool flag, map *loc) {
     }
 }
 
+
+// 展示函数
 void MemoryManagement::show(bool debug) const {
     if (current == nullptr) {
         printf("No memory available now!");

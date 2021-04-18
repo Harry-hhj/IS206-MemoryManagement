@@ -4,18 +4,20 @@
 #include "MemoryManagement.h"
 
 
+// 命令枚举类型
 enum class CMD : uint8_t {
-    LMALLOC = 0,
-    LFREE = 1,
-    QUIT = 2,
+    LMALLOC = 0,  // malloc size
+    LFREE = 1,  // free size addr
+    QUIT = 2,  // quit input
 };
 
+// 用于处理用户终端输入
 bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
     while (true) {
         char c;
         c = getchar();
         while (c == ' ' || c == '\t' || c == '\n') c = getchar();
-        if (c == 'm') {
+        if (c == 'm') {  // malloc
             c = getchar();
             if (c != ' ') {
                 while (c != ' ' && c != '\t' && c != '\n') c = getchar();
@@ -23,7 +25,7 @@ bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
             scanf("%u", &size);
             cmd = CMD::LMALLOC;
             return true;
-        } else if (c == 'f') {
+        } else if (c == 'f') {  // free
             c = getchar();
             if (c != ' ') {
                 while (c != ' ' && c != '\t' && c != '\n') c = getchar();
@@ -31,10 +33,10 @@ bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
             scanf("%u %u", &size, &addr);
             cmd = CMD::LFREE;
             return true;
-        } else if (c == 'q') {
+        } else if (c == 'q') {  // quit
             cmd = CMD::QUIT;
             return false;
-        } else if (c == 'h') {
+        } else if (c == 'h') {  // help for more information
             c = getchar();
             if (c != ' ') {
                 while (c != ' ' && c != '\t' && c != '\n') c = getchar();
@@ -47,6 +49,7 @@ bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
     }
 }
 
+// 处理用户文件输入
 void handle_file_input(const char *filename) {
     char c[1000];
     FILE *fptr;
@@ -69,7 +72,7 @@ void handle_file_input(const char *filename) {
         size = 0;
         char *p = c;
         while (*p == ' ' || *p == '\t') ++p;
-        if (*p == 'm') {
+        if (*p == 'm') {  // malloc
             cmd = CMD::LMALLOC;
             while (*p != ' ' && *p != '\t') {
                 if (*p == '\0') {
@@ -95,7 +98,7 @@ void handle_file_input(const char *filename) {
                     break;
                 }
             }
-        } else if (*p == 'f') {
+        } else if (*p == 'f') {  // free
             cmd = CMD::LFREE;
             while (*p != ' ' && *p != '\t') {
                 if (*p == '\0') {
