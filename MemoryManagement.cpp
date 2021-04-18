@@ -57,7 +57,7 @@ bool MemoryManagement::lmalloc(const unsigned int size) {
     }
 }
 
-void MemoryManagement::lfree(unsigned int addr, unsigned int size) {
+void MemoryManagement::lfree(unsigned int addr, unsigned int size, bool show) {
     if (size <= 0) {
         printf("Exceed allowed space [%x:%x].\n", start+size, start);
         return;
@@ -107,6 +107,7 @@ void MemoryManagement::lfree(unsigned int addr, unsigned int size) {
         tmp->prior->next = tmp;
         check(true, tmp);
     }
+    if (show) this->show(true);
 }
 
 void MemoryManagement::check(bool flag, map *loc) {

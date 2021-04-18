@@ -1,0 +1,12 @@
+malloc 100
+malloc 500
+free 100 300
+free 50 400
+free 50 550
+malloc 200
+malloc 100
+free 100 0
+malloc 150
+free 100 500
+free 150 600
+free 1 999

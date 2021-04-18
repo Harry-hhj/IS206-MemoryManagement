@@ -1,15 +1,14 @@
 #include <iostream>
 #include <cstdio>
-#include <string>
+#include <cstring>
 #include "MemoryManagement.h"
 
-// haiyao mingling shuru de liangzhong chuli
 
 enum class CMD : uint8_t {
-        LMALLOC = 0,
-        LFREE = 1,
-        QUIT = 2,
-    };
+    LMALLOC = 0,
+    LFREE = 1,
+    QUIT = 2,
+};
 
 bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
     while (true) {
@@ -48,71 +47,147 @@ bool handle_input(CMD &cmd, unsigned int &size, unsigned int &addr) {
     }
 }
 
-void handle_file_input(std::string &filename) {
-    ;
+void handle_file_input(const char *filename) {
+    char c[1000];
+    FILE *fptr;
+
+    if ((fptr = fopen(filename, "r")) == nullptr) {
+        printf("Error! opening file");
+        // 文件指针返回 NULL 则退出
+        exit(1);
+    }
+
+    CMD cmd;
+    unsigned int addr = 0, size = 0, line = 0;
+    MemoryManagement manager;
+    while(fgets(c,1000,fptr) != nullptr) {  // 读取文本，直到碰到新的一行开始
+        int len = strlen(c);
+        c[len-1] = '\0';  /*去掉换行符*/
+        printf("读取内容:\n%s\n", c);
+        ++line;
+        addr = 0;
+        size = 0;
+        char *p = c;
+        while (*p == ' ' || *p == '\t') ++p;
+        if (*p == 'm') {
+            cmd = CMD::LMALLOC;
+            while (*p != ' ' && *p != '\t') {
+                if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[size].\n", line);
+                    break;
+                }
+                ++p;
+            }
+            while (*p == ' ' || *p == '\t') {
+                if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[size].\n", line);
+                    break;
+                }
+                ++p;
+            }
+            while (*p != ' ' && *p != '\t' && *p != '\0') {
+                if (*p >= '0' && *p <= '9') {
+                    size *= 10;
+                    size += *p - '0';
+                    ++p;
+                } else {
+                    printf("Command error at line %d.\nExpected unsigned int for parameter:[size].\n", line);
+                    break;
+                }
+            }
+        } else if (*p == 'f') {
+            cmd = CMD::LFREE;
+            while (*p != ' ' && *p != '\t') {
+                if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[size].\n", line);
+                    break;
+                }
+                ++p;
+            }
+            while (*p == ' ' || *p == '\t') {
+                if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[size].\n", line);
+                    break;
+                }
+                ++p;
+            }
+            while (*p != ' ' && *p != '\t') {
+                if (*p >= '0' && *p <= '9') {
+                    size *= 10;
+                    size += *p - '0';
+                    ++p;
+                } else if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[addr].\n", line);
+                    break;
+                } else {
+                    printf("Command error at line %d.\nExpected unsigned int for parameter:[size].\n", line);
+                    break;
+                }
+            }
+            while (*p == ' ' || *p == '\t') {
+                if (*p == '\0') {
+                    printf("Command error at line %d.\nExpected parameter:[addr].\n", line);
+                    break;
+                }
+                ++p;
+            }
+            while (*p != ' ' && *p != '\t' && *p != '\0') {
+                if (*p >= '0' && *p <= '9') {
+                    addr *= 10;
+                    addr += *p - '0';
+                    ++p;
+                } else {
+                    printf("Command error at line %d.\nExpected unsigned int for parameter:[addr].\n", line);
+                    break;
+                }
+            }
+        } else {
+            printf("Command error at line %d.\nUnrecognized parameter:[command].\n", line);
+            continue;
+        }
+        printf("Command %hhu, size %d, addr %d\n", cmd, size, addr);
+        if (cmd == CMD::LMALLOC) {
+            if (manager.lmalloc(size)) {
+                manager.show();
+            } else {
+                printf("Memory Allocated failed!\n");
+            }
+        } else {
+            manager.lfree(addr, size, true);
+        }
+    }
+
+    fclose(fptr);
 }
 
 int main() {
-//    CMD cmd;
-//    unsigned int addr, size;
-//    handle_input(cmd, size, addr);
-//    std::cout << "Hello, World!" << std::endl;
-//    MemoryManagement manager;
-//    manager.show(true);
-//    manager.lmalloc(100);
-//    manager.show(true);
-//    manager.lmalloc(500);
-//    manager.show(true);  // 600-1000*
-//    manager.lfree(300, 100);  // 300-400 600-1000*
-//    manager.lfree(400,50);  // 300-450 600-1000*
-//    manager.lfree(550,50);  // 300-450 550-1000*
-//    manager.show(true);
-////    std::cin.get();
-//    manager.lmalloc(200);  // 300-450 750-1000*
-//    manager.lmalloc(100); // 300-450 850-1000*
-//    manager.show(true);
-////    std::cin.get();
-//    manager.lfree(0,100);  // 0-100 300-450 850-1000*
-//    manager.show(true);
-////    std::cin.get();
-//    /*
-//       Available Memory
-//    ---------------------
-//    |  m_addr:        0  |
-//    |  m_size:      100  |
-//    ---------------------
-//    |  m_addr:      300  |
-//    |  m_size:      150  |
-//    ---------------------
-//    |  m_addr:      900  |
-//    |  m_size:      100  |
-//    ---------------------
-//     */
-////    manager.lmalloc(200); // 0-100 300-450* 850-1000; ===false===
-////    manager.lmalloc(100); // 0-100 300-450* 950-1000*
-//    manager.lmalloc(150);
-//    manager.show(true);
-//    std::cout << manager.lmalloc(150) << std::endl;
-//    manager.lfree(500, 100);
-//    manager.lfree(600, 150);
-//    manager.show(true);
-//    manager.lfree(999, 1);
-//    manager.show(true);
+    int mode = -1;
+    while (mode != 0 && mode != 1) {
+        printf("Please choose input mode: 0 is keyboard while 1 is file.\n");
+        char cmode;
+        scanf("%c", &cmode);
+        mode = cmode - '0';
+    }
+    if (mode == 0) {
+        CMD cmd;
+        unsigned int addr, size;
+        MemoryManagement manager;
 
-    CMD cmd;
-    unsigned int addr, size;
-    MemoryManagement manager;
-
-    while (handle_input(cmd, size, addr)) {
-        if (cmd == CMD::LMALLOC) {
-            if (manager.lmalloc(size)) printf("Your command is: malloc %u\n", size);
-            else printf("Memory Allocated failed!\n");
+        while (handle_input(cmd, size, addr)) {
+            if (cmd == CMD::LMALLOC) {
+                if (manager.lmalloc(size)) printf("Your command is: malloc %u\n", size);
+                else printf("Memory Allocated failed!\n");
+                manager.show(true);
+            } else if (cmd == CMD::LFREE) {
+                printf("Your command is: free %u %u\n", addr, size);
+                manager.lfree(addr, size, true);
+            }
         }
-        else if (cmd == CMD::LFREE) {
-            printf("Your command is: free %u %u\n", addr, size);
-            manager.lfree(addr, size);
-        }
-        manager.show(true);
+    } else {
+        char filename[100] = "../test.txt";
+        printf("Please input you filename(e.g. ../test.txt):\n");
+        scanf("%s", filename);
+        handle_file_input(filename);
     }
 
     return 0;
